@@ -122,16 +122,85 @@ class MicroView(ViewSetMixin,APIView):
 			# 生成评论记录
 			Comment.objects.create(content_object=arctile_obj,content=content,account=account)
 
-			#更新点赞数,收藏数
-			comment_num = request.data.get("comment_num")
-			agree_num = request.data.get("agree_num")
-			collect_num = request.data.get("collect_num")
+			# #更新点赞数,收藏数
+			# comment_num = request.data.get("comment_num")
+			# agree_num = request.data.get("agree_num")
+			# collect_num = request.data.get("collect_num")
 
-			Article.objects.update_or_create(id=article_id,defaults={"comment_num":comment_num,"agree_num":agree_num,"collect_num":collect_num})
+			# Article.objects.update_or_create(id=article_id,defaults={"comment_num":comment_num,"agree_num":agree_num,"collect_num":collect_num})
+
 			ret['comment'] = {"username":account.nickname,"comment":content}
 			ret['msg'] = '评论成功'
 		except Exception:
 			ret["code"] = 1001
 			ret['error'] = '评论失败'
+
+		return Response(ret)
+
+# 对字段进行操作，需要用F包起来；
+from django.db.models import F
+class UpdownView(APIView):
+	def post(self,request,*args,**kwargs):
+		ret = {
+			"code": 1000,
+			"data" : {"status":True,"msg": "",}
+		}
+		article_id = request.data.get("article_id")
+		arctile_obj = Article.objects.filter(id=article_id).first()
+		tokens = request.data.get("token")
+		account = Tokeninfo.objects.filter(tokens=tokens).first().user
+		isUp = request.data.get("isup")  # 已经反序列化为true了
+		# print(isUp)
+		try:
+			ArticleUpDown.objects.create(article = arctile_obj,user = account,is_up=isUp)
+			if isUp:
+				# 表示点赞数
+				Article.objects.filter(pk=article_id).update(agree_num=F("agree_num") + 1)
+			#否则是踩数加1
+			# else:
+			# 	Article.objects.filter(pk=article_id).update(up_count=F("agree_num") + 1)
+		except Exception:
+		#已经点赞过了
+			ret["data"]["status"] = False
+# 如果有点赞或是踩的时候需要判断一下，用户第一次的操作，是点赞还是踩，然后才返回提示（点赞过或是踩过）在这么只有点赞，所以没有补充
+			ret["data"]["msg"] = "已经点赞过了"
+		return Response(ret)
+
+from django.contrib.contenttypes.models import ContentType
+
+class CollectionView(APIView):
+	def post(self,request,*args,**kwargs):
+		ret={
+			"code":1000,
+			"msg":'',
+			"collections":True,
+		}
+
+		article_id = request.data.get("article_id")
+		arctile_obj = Article.objects.filter(id=article_id).first()
+		tokens = request.data.get("token")
+		account = Tokeninfo.objects.filter(tokens=tokens).first().user
+
+		try:
+			# 收藏成功
+			Collection.objects.create(content_object = arctile_obj,account = account)
+			#收藏数加1
+
+			Article.objects.filter(pk=article_id).update(collect_num=F("collect_num") + 1)
+
+			ret["msg"] = "收藏成功"
+
+
+		except Exception:
+			#这里报错就相当于在点击了一次收藏，即取消收藏
+			Article.objects.filter(pk=article_id).update(collect_num=F("collect_num") - 1)
+
+			str_model = Article._meta.model_name
+
+			Collection.objects.filter(content_type = ContentType.objects.get(model=str_model),object_id=article_id,account = account).delete()
+
+			ret["msg"] = "取消收藏"
+			ret["collections"] = False
+
 
 		return Response(ret)

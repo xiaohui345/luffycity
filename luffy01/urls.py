@@ -18,4 +18,9 @@ urlpatterns = [
 	#
     url(r'micro/$', course.MicroView.as_view({"get":"list"})),
 	url(r'micro/(?P<pk>\d+)/$', course.MicroView.as_view({"get": "retrieve","post":"create"})),
+
+    #对某篇文章进行点赞API
+    url(r'micro/(?P<pk>\d+)/updown/$', course.UpdownView.as_view()),
+    #收藏API
+    url(r'micro/(?P<pk>\d+)/collection/$', course.CollectionView.as_view()),
 ]

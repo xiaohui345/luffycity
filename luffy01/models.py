@@ -305,16 +305,16 @@ class PricePolicy(models.Model):
 	# course = models.ForeignKey("Course")
 	valid_period_choices = (
 		(1, '1天'),
-	    (3, '3天'),
-	    (7, '1周'),
-	    (14, '2周'),
-	    (30, '1个月'),
-	    (60, '2个月'),
-	    (90, '3个月'),
-	    (180, '6个月'),
-	    (210, '12个月'),
-	    (540, '18个月'),
-	    (720, '24个月'),
+		(3, '3天'),
+		(7, '1周'),
+		(14, '2周'),
+		(30, '1个月'),
+		(60, '2个月'),
+		(90, '3个月'),
+		(180, '6个月'),
+		(210, '12个月'),
+		(540, '18个月'),
+		(720, '24个月'),
 	)
 	valid_period = models.SmallIntegerField(choices=valid_period_choices)
 	price = models.FloatField()
@@ -328,6 +328,22 @@ class PricePolicy(models.Model):
 
 
 # ######################## 深科技相关 ########################
+class ArticleUpDown(models.Model):
+	"""
+	点赞表
+	"""
+	id = models.AutoField(primary_key=True)
+	user = models.ForeignKey(to="Userinfo", null=True)
+	article = models.ForeignKey(to="Article", null=True)
+	# is_up是true是点赞，false是踩
+	is_up = models.BooleanField(default=True)
+
+	class Meta:
+		unique_together = (("article", "user"),)
+		verbose_name = "文章点赞"
+		verbose_name_plural = verbose_name
+
+
 class ArticleSource(models.Model):
 	"""文章来源"""
 	name = models.CharField(max_length=64, unique=True)
@@ -341,8 +357,6 @@ class ArticleSource(models.Model):
 
 class Article(models.Model):
 	"""文章资讯"""
-
-
 
 	title = models.CharField(max_length=255, unique=True, db_index=True, verbose_name="标题")
 	source = models.ForeignKey("ArticleSource", verbose_name="来源")
@@ -370,7 +384,6 @@ class Article(models.Model):
 	position = models.SmallIntegerField(choices=position_choices, default=0, verbose_name="位置")
 
 	# comment = GenericRelation("Comment")
-
 
 	# 不会在数据库生成列，只用于帮助你进行查询
 	Comment_list = GenericRelation("Comment")

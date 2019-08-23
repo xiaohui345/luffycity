@@ -3,6 +3,7 @@
     <h2>文章详情</h2>
     <ul style="padding:5px">
       <li style="list-style: none">
+        <img :src=head_img alt="" style="width: 300px;height: 200px">
         <h2>{{title}}</h2>
         <p>来源于:{{source}}</p>
         <p>正文:{{content}}</p>
@@ -24,6 +25,7 @@
         <span class="comment">点赞数:{{comment_obj.agree_number}}</span>
         <a><i class="fa fa-thumbs-down" aria-hidden="true"></i></a>
         <span class="comment">踩数:{{comment_obj.disagree_number}}</span>
+        <a><span class="comment">回复</span></a>
       </li>
     </ul>
     <p>评论:</p>
@@ -45,6 +47,7 @@
     name: "Varticle",
     data() {
       return {
+        head_img: '',
         title: '',
         source: '',
         content: '',
@@ -54,6 +57,8 @@
         collect_num: 0,
         comentcontent: '',
         comment: [],
+        isup:true,
+      //  是true 则会点赞，如果是false则会踩
       }
     },
     methods: {
@@ -69,6 +74,7 @@
           //  }
         }).then(function (arg) {
           // console.log(arg.data);
+          that.head_img = arg.data.data.head_img;
           that.title = arg.data.data.title;
           that.source = arg.data.data.source;
           that.content = arg.data.data.content;
@@ -84,13 +90,73 @@
 
       ChangecommentHander() {
         //    点击 点赞数+1
-        this.agree_num++
-        //  每个人只能点赞一次
+        //  每个人只能点赞一次，在后端进行判断
+        var article_id = this.$route.params.id;
+        var that = this;
+        this.$axios.request({
+          url: "http://127.0.0.1:8008/api/v2/micro/" + article_id + "/"+'updown/',
+          method: 'post',
+          data: {
+            token: that.$store.state.token,
+            article_id: article_id,
+            isup: that.isup,
+          },
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(function (arg) {
+          //  提交成功后
+          if (arg.data.code === 1000) {
+            if(arg.data.data.status){
+               //表示点赞成功
+               //在网页上要展示加1
+            that.agree_num++;
+            }else {
+              //已经点赞过了
+              alert(arg.data.data.msg)
+            }
+          } else {
+            // console(arg.data.error)
+          }
+        }).catch(function (arg) {
+        })
+
       },
       ChangecollectHander() {
         //   收藏 收藏数+1
-        this.collect_num++
-        //  每个人只能点一次收藏，再点就取消收藏了。
+        var article_id = this.$route.params.id;
+        var that = this;
+        this.$axios.request({
+          url:"http://127.0.0.1:8008/api/v2/micro/" + article_id + "/"+"collection/",
+          method:'post',
+          data:{
+              token: that.$store.state.token,
+              article_id: article_id,
+          },
+          headers:{
+            'Content-Type':'application/json'
+          }
+        }).then(function (arg) {
+          if(arg.data.code === 1000){
+            console.log(arg.data);
+            if(arg.data.collections){
+            //    收藏成功
+              that.collect_num++;
+              alert(arg.data.msg)
+
+            }else {
+               //  每个人只能点一次收藏，再点就取消收藏了。
+               //    取消收藏
+              that.collect_num--;
+              alert(arg.data.msg)
+            }
+          }else {
+            //收藏失败
+          }
+        }).catch(function () {
+
+        });
+
       },
       commentHander() {
         //提交评论
@@ -103,9 +169,6 @@
           data: {
             token: that.$store.state.token,
             article_id: article_id,
-            comment_num: that.comment_num,
-            agree_num: that.agree_num,
-            collect_num: that.collect_num,
             comentcontent: that.comentcontent,
           },
           headers: {
@@ -135,12 +198,12 @@
         return this.comment
       }
     },
-    filters:{
-       formatDate(time) {
-            var date = new Date(time);
-            return formatDate(date, 'yyyy-MM-dd hh:mm');
+    filters: {
+      formatDate(time) {
+        var date = new Date(time);
+        return formatDate(date, 'yyyy-MM-dd hh:mm');
+      }
     }
-  }
   }
 
 </script>
