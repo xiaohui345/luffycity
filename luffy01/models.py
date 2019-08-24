@@ -404,10 +404,26 @@ class Collection(models.Model):
 	account = models.ForeignKey("Userinfo")
 	date = models.DateTimeField(auto_now_add=True)
 
+	# is_up是true是点赞，false是踩
+	is_up = models.BooleanField(default=True)
+
 	class Meta:
 		unique_together = ('content_type', 'object_id', 'account')
 		verbose_name_plural = "18. 通用收藏表"
 
+# 补充
+# class Updown(models.Model):
+# 	"""点赞"""
+# 	content_type = models.ForeignKey(ContentType)
+# 	object_id = models.PositiveIntegerField()
+# 	content_object = GenericForeignKey('content_type', 'object_id')
+#
+# 	account = models.ForeignKey("Userinfo")
+# 	date = models.DateTimeField(auto_now_add=True)
+#
+# 	class Meta:
+# 		unique_together = ('content_type', 'object_id', 'account')
+# 		verbose_name_plural = "18. 通用收藏表"
 
 class Comment(models.Model):
 	"""通用的评论表"""

@@ -138,3 +138,4 @@ REST_FRAMEWORK={
 	'DEFAULT_VERSIONING_CLASS':'rest_framework.versioning.URLPathVersioning',
 	# 'rest_framework.versioning.QueryParameterVersioning' # 源码里面只支持配置一种方式 ；通过什么方式结合的版本(参数或者是url)
 }
+
