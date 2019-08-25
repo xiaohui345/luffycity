@@ -85,11 +85,22 @@ class MicroView(ViewSetMixin,APIView):
 		# 得到关于这个文章的所有评论
 		arcticle_comment = []
 		for item in article_obj.Comment_list.all():
-			if not item.p_node:
-				# 没有父级评论
-				arcticle_comment.append({"username":item.account.nickname,"comment":item.content,
-				                         "disagree_number":item.disagree_number,
-				                         "agree_number":item.agree_number,"date":item.date})
+			# 区别一下哪些是子评论和 根评论
+			try:
+				p_id = item.p_node.id
+				# 父评论的数据
+				p_comment={
+					"username":item.p_node.account.nickname,
+					'comment':item.p_node.content
+				}
+
+			except Exception:
+				p_id = False
+				p_comment={}
+			arcticle_comment.append({"id":item.id,"username":item.account.nickname,"comment":item.content,
+			                         "disagree_number":item.disagree_number,
+			                     "agree_number":item.agree_number,"date":item.date,"p_id":p_id,"p_comment":p_comment})
+
 
 		# print(article_list)
 		qureyset = ArticledetialSerializers(article_obj, many=False)
@@ -118,18 +129,22 @@ class MicroView(ViewSetMixin,APIView):
 			content = request.data.get("comentcontent")
 			tokens = request.data.get("token")
 			account = Tokeninfo.objects.filter(tokens = tokens).first().user
+			#父评论的ID
+			p_node = request.data.get("p_node")
+			print(account,arctile_obj)
+			if p_node:
+				#子评论
+				# 先找到'\n'的索引位置
+				nindex = content.index('\n')
+				# 那'\n'的索引位置的后面的数据才是真正的内容。
+				new_content = content[nindex + 1:]
+				comment_obj = Comment.objects.create(content_object=arctile_obj,content=new_content,account=account,p_node_id=p_node)
+			else:
+				# 根评论
+				# 生成评论记录
+				comment_obj = Comment.objects.create(content_object=arctile_obj, content=content, account=account)
 
-			# 生成评论记录
-			Comment.objects.create(content_object=arctile_obj,content=content,account=account)
-
-			# #更新点赞数,收藏数
-			# comment_num = request.data.get("comment_num")
-			# agree_num = request.data.get("agree_num")
-			# collect_num = request.data.get("collect_num")
-
-			# Article.objects.update_or_create(id=article_id,defaults={"comment_num":comment_num,"agree_num":agree_num,"collect_num":collect_num})
-
-			ret['comment'] = {"username":account.nickname,"comment":content}
+			ret['comment'] = {"username":account.nickname,"comment":content,"date":comment_obj.date}
 			ret['msg'] = '评论成功'
 		except Exception:
 			ret["code"] = 1001
@@ -170,6 +185,7 @@ from django.contrib.contenttypes.models import ContentType
 
 class CollectionView(APIView):
 	def post(self,request,*args,**kwargs):
+
 		ret={
 			"code":1000,
 			"msg":'',
@@ -180,7 +196,7 @@ class CollectionView(APIView):
 		arctile_obj = Article.objects.filter(id=article_id).first()
 		tokens = request.data.get("token")
 		account = Tokeninfo.objects.filter(tokens=tokens).first().user
-
+		print(ret,account,arctile_obj)
 		try:
 			# 收藏成功
 			Collection.objects.create(content_object = arctile_obj,account = account)

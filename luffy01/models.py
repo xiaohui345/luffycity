@@ -397,6 +397,7 @@ class Article(models.Model):
 
 class Collection(models.Model):
 	"""收藏"""
+
 	content_type = models.ForeignKey(ContentType)
 	object_id = models.PositiveIntegerField()
 	content_object = GenericForeignKey('content_type', 'object_id')
@@ -404,9 +405,7 @@ class Collection(models.Model):
 	account = models.ForeignKey("Userinfo")
 	date = models.DateTimeField(auto_now_add=True)
 
-	# is_up是true是点赞，false是踩
-	is_up = models.BooleanField(default=True)
-
+	
 	class Meta:
 		unique_together = ('content_type', 'object_id', 'account')
 		verbose_name_plural = "18. 通用收藏表"

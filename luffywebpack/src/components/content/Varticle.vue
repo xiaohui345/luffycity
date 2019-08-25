@@ -16,25 +16,31 @@
       </li>
     </ul>
     <p>评论区:</p>
-    <ul style="padding:5px 0">
-      <li v-for="(comment_obj,index) in commentHaner" style="list-style: none;border-bottom: 1px solid slategray">
+    <div v-for="(comment_obj,index) in commentHaner" style="padding:5px 0;border-bottom: 1px solid slategray;">
+      <div>
         <p>评论人:{{comment_obj.username}}</p>
         <p>评论时间:{{comment_obj.date|formatDate}}</p>
+        <div v-if="comment_obj.p_id">
+          <!--有父评论，就显示父评论-->
+          <div class="alert alert-success" role="alert">
+            <p>@<span>{{ comment_obj.p_comment.username}}:</span></p>
+            <p>{{ comment_obj.p_comment.comment }}</p>
+          </div>
+        </div>
         <p>评论内容:{{comment_obj.comment}}</p>
         <a><i class="fa fa-thumbs-up" aria-hidden="true"></i></a>
         <span class="comment">点赞数:{{comment_obj.agree_number}}</span>
         <a><i class="fa fa-thumbs-down" aria-hidden="true"></i></a>
         <span class="comment">踩数:{{comment_obj.disagree_number}}</span>
-        <a><span class="comment">回复</span></a>
-      </li>
-    </ul>
+        <a><span class="comment" @click="recallHander(comment_obj.id,comment_obj.username)">回复</span></a></div>
+
+    </div>
     <p>评论:</p>
     <div class="col-md-4">
       <textarea name="" id="" cols="20" rows="3" class="form-control" v-model="comentcontent"></textarea>
     </div>
 
-    <button class="btn btn-success" @click="commentHander">提交评论</button>
-
+    <button class="btn btn-success" @click="commentHander()">提交评论</button>
 
   </div>
 
@@ -42,6 +48,7 @@
 
 <script>
   import {formatDate} from "../../date";
+  import $ from 'jquery'
 
   export default {
     name: "Varticle",
@@ -57,8 +64,8 @@
         collect_num: 0,
         comentcontent: '',
         comment: [],
-        isup:true,
-      //  是true 则会点赞，如果是false则会踩
+        isup: true,
+        //  是true 则会点赞，如果是false则会踩
       }
     },
     methods: {
@@ -94,7 +101,7 @@
         var article_id = this.$route.params.id;
         var that = this;
         this.$axios.request({
-          url: "http://127.0.0.1:8008/api/v2/micro/" + article_id + "/"+'updown/',
+          url: "http://127.0.0.1:8008/api/v2/micro/" + article_id + "/" + 'updown/',
           method: 'post',
           data: {
             token: that.$store.state.token,
@@ -107,11 +114,11 @@
         }).then(function (arg) {
           //  提交成功后
           if (arg.data.code === 1000) {
-            if(arg.data.data.status){
-               //表示点赞成功
-               //在网页上要展示加1
-            that.agree_num++;
-            }else {
+            if (arg.data.data.status) {
+              //表示点赞成功
+              //在网页上要展示加1
+              that.agree_num++;
+            } else {
               //已经点赞过了
               alert(arg.data.data.msg)
             }
@@ -127,30 +134,30 @@
         var article_id = this.$route.params.id;
         var that = this;
         this.$axios.request({
-          url:"http://127.0.0.1:8008/api/v2/micro/" + article_id + "/"+"collection/",
-          method:'post',
-          data:{
-              token: that.$store.state.token,
-              article_id: article_id,
+          url: "http://127.0.0.1:8008/api/v2/micro/" + article_id + "/" + "collection/",
+          method: 'post',
+          data: {
+            token: that.$store.state.token,
+            article_id: article_id,
           },
-          headers:{
-            'Content-Type':'application/json'
+          headers: {
+            'Content-Type': 'application/json'
           }
         }).then(function (arg) {
-          if(arg.data.code === 1000){
+          if (arg.data.code === 1000) {
             console.log(arg.data);
-            if(arg.data.collections){
-            //    收藏成功
+            if (arg.data.collections) {
+              //    收藏成功
               that.collect_num++;
               alert(arg.data.msg)
 
-            }else {
-               //  每个人只能点一次收藏，再点就取消收藏了。
-               //    取消收藏
+            } else {
+              //  每个人只能点一次收藏，再点就取消收藏了。
+              //    取消收藏
               that.collect_num--;
               alert(arg.data.msg)
             }
-          }else {
+          } else {
             //收藏失败
           }
         }).catch(function () {
@@ -160,7 +167,7 @@
       },
       commentHander() {
         //提交评论
-        this.comment_num++;
+        var p_node = this.$store.state.p_id;
         var article_id = this.$route.params.id;
         var that = this;
         this.$axios.request({
@@ -170,6 +177,7 @@
             token: that.$store.state.token,
             article_id: article_id,
             comentcontent: that.comentcontent,
+            p_node: p_node
           },
           headers: {
             'Content-Type': 'application/json'
@@ -178,14 +186,19 @@
           //  提交成功后
           if (arg.data.code === 1000) {
             alert(arg.data.msg);
+            console.log(arg.data);
+            that.comment_num++;
             that.comentcontent = '';
-            // console.log(arg.data.comment);
             that.comment.push(arg.data.comment)
           } else {
             alert(arg.data.error)
           }
         }).catch(function (arg) {
         })
+      },
+      recallHander(p_id, username) {
+        this.comentcontent = '@' + username + ' \n ';
+        this.$store.state.p_id = p_id
       }
 
     },

@@ -20,6 +20,7 @@ export default new vuex.Store({
       register:"http://127.0.0.1:8008/api/v2/register/",
     },
     backUrl:'',
+    p_id:'',
 
   },
   mutations:{
