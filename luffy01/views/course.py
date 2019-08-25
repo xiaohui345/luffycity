@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Author: 曾辉
+from django.shortcuts import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet,ViewSetMixin
 from rest_framework.response import Response
@@ -220,3 +221,9 @@ class CollectionView(APIView):
 
 
 		return Response(ret)
+
+
+
+def github(request):
+
+	return HttpResponse("github")

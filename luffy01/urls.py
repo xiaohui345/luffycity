@@ -23,4 +23,8 @@ urlpatterns = [
     url(r'micro/(?P<pk>\d+)/updown/$', course.UpdownView.as_view()),
     #收藏API
     url(r'micro/(?P<pk>\d+)/collection/$', course.CollectionView.as_view()),
+    
+
+    #修改测试 github
+    url(r'github/$', course.github),
 ]
