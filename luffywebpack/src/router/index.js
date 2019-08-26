@@ -56,9 +56,9 @@ export default new Router({
       path: '/article/:id',
       name: 'article',
       component: Varticle,
-      // meta: {
-      //   requireAuth: true
-      // },
+      meta: {
+        requireAuth: true
+      },
     }
   ],
   mode: 'history'
